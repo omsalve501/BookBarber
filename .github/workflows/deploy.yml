@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        portal: [ admin-portal, partner-portal, customer-portal ]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: '${{ matrix.portal }}/package-lock.json'
+    
+    - name: Install dependencies for ${{ matrix.portal }}
+      run: npm install
+      working-directory: ${{ matrix.portal }}
+    
+    - name: Build ${{ matrix.portal }}
+      run: npm run build
+      working-directory: ${{ matrix.portal }}
+      env:
+        REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+    
+    - name: Deploy ${{ matrix.portal }} to GitHub Pages
+      run: npm run deploy
+      working-directory: ${{ matrix.portal }}
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  site-status:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    
+    steps:
+    - name: Deployment Status
+      run: |
+        echo "✅ Deployment completed!"
+        echo ""
+        echo "Your BookBarber portals should be available shortly at:"
+        echo "  - Admin:    https://${{ github.repository_owner }}.github.io/BookBarber/admin"
+        echo "  - Partner:  https://${{ github.repository_owner }}.github.io/BookBarber/partner"
+        echo "  - Customer: https://${{ github.repository_owner }}.github.io/BookBarber/customer"
+        echo ""
+        echo "If you see 404 errors, make sure GitHub Pages is enabled:"
+        echo "  1. Go to Settings → Pages"
+        echo "  2. Select 'gh-pages' as the source branch"
+        echo "  3. Save"

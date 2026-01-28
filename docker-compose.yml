@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: bookbarber_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - bookbarber_network
+
+  backend:
+    build: ./backend
+    container_name: bookbarber_backend
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/bookbarber
+      JWT_SECRET: your_jwt_secret_key_here
+      JWT_EXPIRE: 7d
+      NODE_ENV: development
+    depends_on:
+      - mongodb
+    networks:
+      - bookbarber_network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  admin_portal:
+    build: ./admin-portal
+    container_name: bookbarber_admin
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - bookbarber_network
+    volumes:
+      - ./admin-portal:/app
+      - /app/node_modules
+
+  partner_portal:
+    build: ./partner-portal
+    container_name: bookbarber_partner
+    ports:
+      - "3001:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - bookbarber_network
+    volumes:
+      - ./partner-portal:/app
+      - /app/node_modules
+
+  customer_portal:
+    build: ./customer-portal
+    container_name: bookbarber_customer
+    ports:
+      - "3002:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - bookbarber_network
+    volumes:
+      - ./customer-portal:/app
+      - /app/node_modules
+
+volumes:
+  mongo_data:
+
+networks:
+  bookbarber_network:
+    driver: bridge
