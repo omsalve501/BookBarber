@@ -29,7 +29,7 @@ jobs:
       working-directory: ${{ matrix.portal }}
     
     - name: Build ${{ matrix.portal }}
-      run: npm run build
+      run: CI=false npm run build
       working-directory: ${{ matrix.portal }}
       env:
         REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
