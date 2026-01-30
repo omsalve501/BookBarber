@@ -22,7 +22,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: '${{ matrix.portal }}/package-lock.json'
+        cache-dependency-path: '${{ matrix.portal }}/package.json'
     
     - name: Install dependencies for ${{ matrix.portal }}
       run: npm install
